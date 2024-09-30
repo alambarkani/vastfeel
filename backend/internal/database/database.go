@@ -7,15 +7,10 @@ import (
 	"time"
 
 	_ "github.com/lib/pq"
-	"github.com/lpernett/godotenv"
 )
 
 
 func DBConnect() (*sql.DB, error) {
-	err := godotenv.Load()
-	if err != nil {
-		panic(err)
-	}
 	var (
 		host = os.Getenv("DB_HOST")
 		port = os.Getenv("DB_PORT")
