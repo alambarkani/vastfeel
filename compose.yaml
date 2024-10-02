@@ -1,0 +1,66 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      target: final
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    image: vastfeelfe
+    build:
+      context: ./frontend
+    environment:
+      NODE_ENV: production
+    ports:
+      - 8080:8080
+
+  db:
+    image: postgres
+    restart: always
+    user: postgres
+    ports:
+      - "5432:5432"
+    # secrets:
+    #   - db-password
+    # volumes:
+    #   - db-data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      # - POSTGRES_PASSWORD_FILE=/run/secrets/db-password
+    expose:
+      - 5432
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  migrate:
+    image: migrate/migrate
+    entrypoint:
+      [
+        "sh",
+        "-c",
+        "migrate -path /migrations -database postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable up",
+      ]
+    volumes:
+      - ./backend/internal/database/migrations:/migrations
+    depends_on:
+      - db
+    command:
+      [
+        "-path",
+        "/migrations",
+        "-database",
+        "postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable",
+        "up",
+      ]
+
