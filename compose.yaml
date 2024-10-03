@@ -10,15 +10,26 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      - ./backend:/src
 
   frontend:
-    image: vastfeelfe
     build:
       context: ./frontend
     environment:
       NODE_ENV: production
     ports:
       - 8080:8080
+    develop:
+      watch:
+        - action: sync
+          path: ./frontend
+          target: ./frontend
+          ignore:
+            - node_modules/
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
 
   db:
     image: postgres
@@ -28,8 +39,6 @@ services:
       - "5432:5432"
     # secrets:
     #   - db-password
-    # volumes:
-    #   - db-data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=${DB_NAME}
       - POSTGRES_USER=${DB_USER}
@@ -63,4 +72,3 @@ services:
         "postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable",
         "up",
       ]
-
